@@ -17,6 +17,7 @@ import { adminApi } from '@/src/services/api';
 import { useWebSocket } from '@/src/services/websocket';
 import StationCard from '@/components/admin/StationCard';
 import AlertPanel from '@/components/admin/AlertPanel';
+import SupervisorChat from '@/components/admin/SupervisorChat';
 
 export default function AdminDashboard() {
   const {
@@ -130,6 +131,24 @@ export default function AdminDashboard() {
     }
   };
 
+  // Hook for supervisor agent integration
+  const handleSupervisorMessage = async (message: string, context: any) => {
+    // TODO: Replace with your actual Pydantic-AI Supervisor agent call
+    console.log('🤖 Supervisor request:', message);
+    console.log('📊 Context:', context);
+    
+    // Example: Call your supervisor agent API
+    // const response = await fetch('YOUR_SUPERVISOR_AGENT_URL', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({ message, context }),
+    // });
+    // return await response.json();
+    
+    // For now, uses mock response (in SupervisorChat component)
+    throw new Error('Connect to supervisor agent');
+  };
+
   // Calculate summary metrics
   const totalPatients = stations.reduce((sum, s) => sum + s.queue_length, 0);
   const avgWaitTime = stations.length > 0
@@ -240,6 +259,37 @@ export default function AdminDashboard() {
           </View>
         )}
 
+        {/* Supervisor Chat CTA */}
+        <View className="mx-4 mt-4">
+          <TouchableOpacity
+            className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 shadow-lg"
+            style={{
+              backgroundColor: '#2563eb',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              elevation: 8,
+            }}
+            onPress={() => setShowChat(true)}
+          >
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1">
+                <View className="flex-row items-center mb-2">
+                  <Text className="text-4xl mr-3">🤖</Text>
+                  <Text className="text-white text-xl font-bold">AI Supervisor</Text>
+                </View>
+                <Text className="text-white opacity-90 text-sm">
+                  Ask me anything about hospital flow, bottlenecks, or recommendations
+                </Text>
+              </View>
+              <View className="bg-white/20 rounded-full p-3">
+                <Text className="text-white text-2xl">💬</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
+
         {/* Demo Controls */}
         <View className="mx-4 my-4">
           <Text className="text-lg font-bold text-gray-800 mb-3">
@@ -263,15 +313,6 @@ export default function AdminDashboard() {
               🟢 Resolve Bottleneck (Pharmacy -15)
             </Text>
           </TouchableOpacity>
-
-          <TouchableOpacity
-            className="bg-blue-600 rounded-xl p-4"
-            onPress={() => setShowChat(true)}
-          >
-            <Text className="text-white font-bold text-center">
-              💬 Open Supervisor Chat
-            </Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
 
@@ -281,37 +322,10 @@ export default function AdminDashboard() {
         animationType="slide"
         presentationStyle="pageSheet"
       >
-        <View className="flex-1 bg-white">
-          <View className="bg-blue-600 p-4">
-            <View className="flex-row items-center justify-between">
-              <Text className="text-white text-xl font-bold">💬 AI Supervisor</Text>
-              <TouchableOpacity onPress={() => setShowChat(false)}>
-                <Text className="text-white text-2xl">×</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-          
-          <View className="flex-1 items-center justify-center p-6">
-            <Text className="text-6xl mb-4">🤖</Text>
-            <Text className="text-2xl font-bold text-gray-800 mb-2">AI Supervisor Chat</Text>
-            <Text className="text-gray-600 text-center mb-6">
-              This will be integrated with your Supervisor Agent
-            </Text>
-            
-            <View className="w-full bg-gray-100 rounded-xl p-4">
-              <Text className="text-sm text-gray-600 mb-2">Integration Points:</Text>
-              <Text className="text-sm text-gray-800">• Real-time station metrics</Text>
-              <Text className="text-sm text-gray-800">• Current alerts and bottlenecks</Text>
-              <Text className="text-sm text-gray-800">• Patient flow analytics</Text>
-              <Text className="text-sm text-gray-800">• Action recommendations</Text>
-            </View>
-
-            <Text className="text-xs text-gray-400 mt-6 text-center">
-              Connect this component to your supervisor agent
-              to enable real-time AI assistance
-            </Text>
-          </View>
-        </View>
+        <SupervisorChat
+          onClose={() => setShowChat(false)}
+          onSendToSupervisor={handleSupervisorMessage}
+        />
       </Modal>
     </View>
   );
