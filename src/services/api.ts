@@ -1,43 +1,42 @@
 /**
  * API Client for Phoenix AI Backend
- * Handles all HTTP requests to the FastAPI server
+ * Handles all HTTP requests to FastAPI endpoints
  */
 
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 
-// Configuration
+// API Base URL - change to deployed URL in production
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
-const API_TIMEOUT = 10000; // 10 seconds
 
-// Create axios instance
-export const apiClient = axios.create({
+// Create axios instance with default config
+export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: API_TIMEOUT,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor (for logging, auth tokens, etc.)
+// Request interceptor for logging
 apiClient.interceptors.request.use(
   (config) => {
-    console.log(`📤 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    console.log(`🔵 API Request: ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
   (error) => {
-    console.error('❌ Request Error:', error);
+    console.error('❌ API Request Error:', error);
     return Promise.reject(error);
   }
 );
 
-// Response interceptor (for error handling)
+// Response interceptor for error handling
 apiClient.interceptors.response.use(
   (response) => {
-    console.log(`✅ API Response: ${response.status} ${response.config.url}`);
+    console.log(`✅ API Response: ${response.config.url} - ${response.status}`);
     return response;
   },
-  (error: AxiosError) => {
-    console.error('❌ Response Error:', error.response?.status, error.message);
+  (error) => {
+    console.error('❌ API Response Error:', error.response?.data || error.message);
     return Promise.reject(error);
   }
 );
@@ -111,14 +110,6 @@ export interface StationMetrics {
   last_updated: string;
 }
 
-export interface RealtimeDashboardResponse {
-  stations: StationMetrics[];
-  total_patients_in_system: number;
-  average_journey_time_minutes: number;
-  bottlenecks: string[];
-  last_refresh: string;
-}
-
 export interface AlertRecommendation {
   action: string;
   priority: number;
@@ -132,6 +123,14 @@ export interface DashboardAlert {
   message: string;
   detected_at: string;
   recommendations: AlertRecommendation[];
+}
+
+export interface RealtimeDashboardResponse {
+  stations: StationMetrics[];
+  total_patients_in_system: number;
+  average_journey_time_minutes: number;
+  bottlenecks: string[];
+  last_refresh: string;
 }
 
 export interface AlertsResponse {
@@ -156,7 +155,7 @@ export interface DailyReportResponse {
 
 export const patientApi = {
   /**
-   * Check in a patient and get queue ticket
+   * Patient check-in with chief complaint
    */
   checkIn: async (data: CheckInRequest): Promise<CheckInResponse> => {
     const response = await apiClient.post<CheckInResponse>('/api/queue/check-in', data);
@@ -164,12 +163,10 @@ export const patientApi = {
   },
 
   /**
-   * Get current queue status for a patient
+   * Get current queue status for patient
    */
   getStatus: async (patientId: string): Promise<QueueStatusResponse> => {
-    const response = await apiClient.get<QueueStatusResponse>(
-      `/api/queue/status/${patientId}`
-    );
+    const response = await apiClient.get<QueueStatusResponse>(`/api/queue/status/${patientId}`);
     return response.data;
   },
 
@@ -177,14 +174,12 @@ export const patientApi = {
    * Get full patient journey across all stations
    */
   getJourney: async (patientId: string): Promise<PatientJourneyResponse> => {
-    const response = await apiClient.get<PatientJourneyResponse>(
-      `/api/queue/journey/${patientId}`
-    );
+    const response = await apiClient.get<PatientJourneyResponse>(`/api/queue/journey/${patientId}`);
     return response.data;
   },
 
   /**
-   * Clear patient data (for testing)
+   * Clear patient data (testing/admin only)
    */
   clearData: async (patientId: string): Promise<void> => {
     await apiClient.delete(`/api/queue/clear/${patientId}`);
@@ -197,17 +192,15 @@ export const patientApi = {
 
 export const adminApi = {
   /**
-   * Get real-time dashboard data
+   * Get real-time dashboard data for all stations
    */
   getRealtime: async (): Promise<RealtimeDashboardResponse> => {
-    const response = await apiClient.get<RealtimeDashboardResponse>(
-      '/api/dashboard/realtime'
-    );
+    const response = await apiClient.get<RealtimeDashboardResponse>('/api/dashboard/realtime');
     return response.data;
   },
 
   /**
-   * Get active alerts and recommendations
+   * Get active alerts and AI recommendations
    */
   getAlerts: async (): Promise<AlertsResponse> => {
     const response = await apiClient.get<AlertsResponse>('/api/dashboard/alerts');
@@ -218,14 +211,12 @@ export const adminApi = {
    * Get daily efficiency report
    */
   getDailyReport: async (): Promise<DailyReportResponse> => {
-    const response = await apiClient.get<DailyReportResponse>(
-      '/api/reports/daily'
-    );
+    const response = await apiClient.get<DailyReportResponse>('/api/dashboard/reports/daily');
     return response.data;
   },
 
   /**
-   * Get metrics summary
+   * Get high-level metrics summary
    */
   getMetricsSummary: async (): Promise<any> => {
     const response = await apiClient.get('/api/dashboard/metrics/summary');
@@ -233,64 +224,21 @@ export const adminApi = {
   },
 
   /**
-   * Simulate bottleneck (for demo)
+   * Simulate bottleneck (demo/testing only)
    */
   simulateBottleneck: async (station: string, queueIncrease: number = 20): Promise<any> => {
-    const response = await apiClient.post(
-      `/api/dashboard/simulate/bottleneck/${station}`,
-      null,
-      { params: { queue_increase: queueIncrease } }
-    );
-    return response.data;
-  },
-
-  /**
-   * Resolve bottleneck (for demo)
-   */
-  resolveBottleneck: async (station: string, queueDecrease: number = 15): Promise<any> => {
-    const response = await apiClient.post(
-      `/api/dashboard/simulate/resolve/${station}`,
-      null,
-      { params: { queue_decrease: queueDecrease } }
-    );
-    return response.data;
-  },
-};
-
-// ============================================================================
-// Prediction API Endpoints
-// ============================================================================
-
-export const predictionApi = {
-  /**
-   * Predict wait time for a station
-   */
-  predictWaitTime: async (data: {
-    station: string;
-    complexity_score: string;
-    time_of_day?: string;
-    day_of_week?: number;
-  }): Promise<any> => {
-    const response = await apiClient.post('/api/predict/wait-time', data);
-    return response.data;
-  },
-
-  /**
-   * Forecast patient volume
-   */
-  forecastVolume: async (hoursAhead: number = 4): Promise<any> => {
-    const response = await apiClient.get('/api/predict/volume', {
-      params: { hours_ahead: hoursAhead },
+    const response = await apiClient.post(`/api/dashboard/simulate/bottleneck/${station}`, null, {
+      params: { queue_increase: queueIncrease },
     });
     return response.data;
   },
 
   /**
-   * Get hourly volume forecast
+   * Resolve bottleneck (demo/testing only)
    */
-  getHourlyForecast: async (hours: number = 8): Promise<any> => {
-    const response = await apiClient.get('/api/predict/volume/hourly', {
-      params: { hours },
+  resolveBottleneck: async (station: string, queueDecrease: number = 15): Promise<any> => {
+    const response = await apiClient.post(`/api/dashboard/simulate/resolve/${station}`, null, {
+      params: { queue_decrease: queueDecrease },
     });
     return response.data;
   },
@@ -300,15 +248,22 @@ export const predictionApi = {
 // Health Check
 // ============================================================================
 
-export const healthCheck = async (): Promise<boolean> => {
-  try {
+export const healthApi = {
+  /**
+   * Check API health status
+   */
+  checkHealth: async (): Promise<any> => {
     const response = await apiClient.get('/health');
-    return response.status === 200;
-  } catch (error) {
-    console.error('Health check failed:', error);
-    return false;
-  }
+    return response.data;
+  },
+
+  /**
+   * Get API root info
+   */
+  getRoot: async (): Promise<any> => {
+    const response = await apiClient.get('/');
+    return response.data;
+  },
 };
 
-// Export base URL for WebSocket connection
-export const WS_BASE_URL = API_BASE_URL.replace('http', 'ws');
+export default apiClient;
