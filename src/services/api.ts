@@ -19,11 +19,11 @@ export const apiClient: AxiosInstance = axios.create({
 
 // Request interceptor for logging
 apiClient.interceptors.request.use(
-  (config) => {
+  (config: any) => {
     console.log(`🔵 API Request: ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
-  (error) => {
+  (error: any) => {
     console.error('❌ API Request Error:', error);
     return Promise.reject(error);
   }
@@ -31,11 +31,11 @@ apiClient.interceptors.request.use(
 
 // Response interceptor for error handling
 apiClient.interceptors.response.use(
-  (response) => {
+  (response: any) => {
     console.log(`✅ API Response: ${response.config.url} - ${response.status}`);
     return response;
   },
-  (error) => {
+  (error: any) => {
     console.error('❌ API Response Error:', error.response?.data || error.message);
     return Promise.reject(error);
   }

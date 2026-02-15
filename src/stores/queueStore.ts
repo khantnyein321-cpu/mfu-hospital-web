@@ -102,7 +102,7 @@ type QueueStore = QueueState & QueueActions;
 // Store Implementation
 // ============================================================================
 
-export const useQueueStore = create<QueueStore>()()
+export const useQueueStore = create<QueueStore>()(
   persist(
     (set, get) => ({
       // Initial State
@@ -115,7 +115,7 @@ export const useQueueStore = create<QueueStore>()()
       language: 'th',
 
       // Patient Actions
-      setPatient: (patient) =>
+      setPatient: (patient: Patient) =>
         set({
           currentPatient: {
             ...patient,
@@ -124,7 +124,7 @@ export const useQueueStore = create<QueueStore>()()
           error: null,
         }),
 
-      updatePosition: (position, estimatedWait) =>
+      updatePosition: (position: number, estimatedWait: number) =>
         set((state) => {
           if (!state.currentPatient) return state;
           
@@ -138,7 +138,7 @@ export const useQueueStore = create<QueueStore>()()
           };
         }),
 
-      updateJourney: (journey, progressPercent) =>
+      updateJourney: (journey: JourneyStep[], progressPercent: number) =>
         set((state) => {
           if (!state.currentPatient) return state;
           
@@ -152,7 +152,7 @@ export const useQueueStore = create<QueueStore>()()
           };
         }),
 
-      updateStation: (station) =>
+      updateStation: (station: string) =>
         set((state) => {
           if (!state.currentPatient) return state;
           
@@ -172,7 +172,7 @@ export const useQueueStore = create<QueueStore>()()
         }),
 
       // Notification Actions
-      addNotification: (notification) =>
+      addNotification: (notification: Omit<Notification, "id" | "timestamp" | "read">) =>
         set((state) => {
           const newNotification: Notification = {
             ...notification,
@@ -187,7 +187,7 @@ export const useQueueStore = create<QueueStore>()()
           };
         }),
 
-      markNotificationAsRead: (id) =>
+      markNotificationAsRead: (id: string) =>
         set((state) => {
           const notifications = state.notifications.map((n) =>
             n.id === id ? { ...n, read: true } : n
@@ -211,13 +211,13 @@ export const useQueueStore = create<QueueStore>()()
         }),
 
       // UI Actions
-      setLoading: (loading) => set({ isLoading: loading }),
+      setLoading: (loading: boolean) => set({ isLoading: loading }),
       
-      setError: (error) => set({ error }),
+      setError: (error: string | null) => set({ error }),
       
-      setConnected: (connected) => set({ isConnected: connected }),
+      setConnected: (connected: boolean) => set({ isConnected: connected }),
       
-      setLanguage: (language) => set({ language }),
+      setLanguage: (language: "th" | "en") => set({ language }),
     }),
     {
       name: 'queue-storage',
@@ -229,7 +229,8 @@ export const useQueueStore = create<QueueStore>()()
         language: state.language,
       }),
     }
-  );
+  )
+);
 
 // ============================================================================
 // Selectors (for performance optimization)
