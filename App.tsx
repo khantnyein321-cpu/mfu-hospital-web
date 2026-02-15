@@ -1,5 +1,6 @@
-import Login from "./app/Auth/Login";
+import './global.css';
+import Navigator from './components/common/Navigator';
 
 export default function App() {
-  return <Login />;
+  return <Navigator />;
 }

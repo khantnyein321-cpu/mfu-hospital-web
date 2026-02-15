@@ -3,6 +3,7 @@
     "name": "smart-queue-app",
     "slug": "smart-queue-app",
     "version": "1.0.0",
+    "scheme": "mfu-hospital",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",

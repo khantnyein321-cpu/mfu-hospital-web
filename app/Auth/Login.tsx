@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function Login() {
+interface LoginProps {
+  onNavigateToDashboard?: () => void;
+}
+
+export default function Login({ onNavigateToDashboard }: LoginProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -15,6 +19,11 @@ export default function Login() {
     
     console.log('Login attempt:', { email, password });
     alert('Login successful!');
+    
+    // Navigate to Dashboard
+    if (onNavigateToDashboard) {
+      onNavigateToDashboard();
+    }
   };
 
   return (
